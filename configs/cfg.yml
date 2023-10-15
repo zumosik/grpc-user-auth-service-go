@@ -1,0 +1,8 @@
+addr: "0.0.0.0:8081"
+timeout: 2
+postgres:
+  host: "_"
+  port : 5432
+  user: "_"
+  password: "_"
+  name: "_"

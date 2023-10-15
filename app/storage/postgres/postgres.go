@@ -41,11 +41,11 @@ func (st *Storage) Close() error {
 func (st *Storage) CreateUser(ctx context.Context, u storage.User) (uint, error) {
 	insertQuery := `
         INSERT INTO users (username, email, password, created_at)
-        VALUES (:username, :email, :password, NOW())
+        VALUES ($1, $2, $3, NOW())
         RETURNING id`
 
 	var userID uint
-	err := st.db.QueryRowxContext(ctx, insertQuery, u).Scan(&userID)
+	err := st.db.QueryRowContext(ctx, insertQuery, u.Username, u.Email, u.Password).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}

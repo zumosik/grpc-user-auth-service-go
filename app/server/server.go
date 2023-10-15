@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	pb2 "github.com/zumosik/grpc-user-auth-service-go/pb"
 	"github.com/zumosik/grpc-user-auth-service-go/storage"
 	"log"
@@ -42,6 +43,7 @@ func (s *Server) GetUsers(ctx context.Context, _ *pb2.GetUsersRequest) (*pb2.Get
 
 	users, err := s.st.GetUsers(ctx, 100)
 	if err != nil {
+
 		return nil, err
 	}
 
@@ -68,6 +70,11 @@ func (s *Server) GetUserDetails(ctx context.Context, req *pb2.GetUserDetailsRequ
 
 	u, err := s.st.GetUserByID(ctx, uint(req.Id))
 	if err != nil {
+		if errors.Is(err, storage.ErrNothingReturned) {
+			log.Println("nothing is returned")
+			return &pb2.GetUserDetailsResponse{}, nil
+		}
+		log.Printf("some error: %v", err)
 		return nil, err
 	}
 
@@ -84,6 +91,7 @@ func (s *Server) CreateUpdateUser(ctx context.Context, req *pb2.CreateUpdateUser
 	defer cancel()
 
 	if req.Operation == pb2.Operation_CREATE {
+		log.Println("create")
 		u := storage.User{
 			Username: req.Username,
 			Email:    req.Email,
@@ -92,16 +100,20 @@ func (s *Server) CreateUpdateUser(ctx context.Context, req *pb2.CreateUpdateUser
 
 		err := u.HashPassword()
 		if err != nil {
+			log.Println(err)
 			return nil, err
 		}
 
 		id, err := s.st.CreateUser(ctx, u)
 		if err != nil {
+			log.Println(err)
 			return nil, err
 		}
 
 		return &pb2.CreateUpdateUserResponse{Id: uint64(id)}, err
 	} else {
+		log.Println("update")
+
 		u := storage.User{
 			ID:       uint(req.Id),
 			Username: req.Username,
@@ -111,11 +123,13 @@ func (s *Server) CreateUpdateUser(ctx context.Context, req *pb2.CreateUpdateUser
 
 		err := u.HashPassword()
 		if err != nil {
+			log.Println(err)
 			return nil, err
 		}
 
 		err = s.st.UpdateUser(ctx, u)
 		if err != nil {
+			log.Println(err)
 			return nil, err
 		}
 

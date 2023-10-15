@@ -18,6 +18,6 @@ FROM alpine AS runner
 EXPOSE 8081
 
 COPY --from=builder /usr/local/src/bin/app /
-COPY configs/config.yml /configs/cfg.yml
+COPY configs/cfg.yml /configs/cfg.yml
 
 CMD ["/app"]
